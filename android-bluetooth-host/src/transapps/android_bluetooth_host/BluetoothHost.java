@@ -1,9 +1,4 @@
 package transapps.android_bluetooth_host;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.UUID;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -12,7 +7,6 @@ import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -22,10 +16,16 @@ import android.view.Menu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.UUID;
+
 
 public class BluetoothHost extends Activity {
 
-    public static String msgToSend="hello world";
+    public static String msgToSend = "hello world";
     public static final int STATE_CONNECTION_STARTED = 0;
     public static final int STATE_CONNECTION_LOST = 1;
     public static final int READY_TO_CONN = 2;
@@ -43,7 +43,7 @@ public class BluetoothHost extends Activity {
     // list of addresses for devices we've connected to
     ArrayList<String> mDeviceAddresses = new ArrayList<String>();
     // just a name, nothing more...
-    String NAME="G6BITCHES";
+    String NAME = "G6BITCHES";
     // We can handle up to 7 connections... or something...
     UUID[] uuids = new UUID[2];
     // some uuid's we like to use..
@@ -58,6 +58,7 @@ public class BluetoothHost extends Activity {
     TextView connectedDevices;
     Handler handle;
     BroadcastReceiver receiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,14 +89,14 @@ public class BluetoothHost extends Activity {
 
         // ....
         myBt = BluetoothAdapter.getDefaultAdapter();
-        // run the "go get em" thread..
-        accThread = new AcceptThread();
-        accThread.start();
+
+        startListening();
     }
+
     public void startListening() {
-        if(accThread!=null) {
+        if (accThread != null) {
             accThread.cancel();
-        }else if (mConnectedThread!= null) {
+        } else if (mConnectedThread != null) {
             mConnectedThread.cancel();
         } else {
             accThread = new AcceptThread();
@@ -109,6 +110,7 @@ public class BluetoothHost extends Activity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
     private class AcceptThread extends Thread {
         private BluetoothServerSocket mmServerSocket;
         BluetoothServerSocket tmp;
@@ -118,18 +120,18 @@ public class BluetoothHost extends Activity {
             try {
                 tmp = myBt.listenUsingInsecureRfcommWithServiceRecord(NAME, uuids[0]);
 
-            } catch (IOException e) { }
+            } catch (IOException e) {
+            }
             mmServerSocket = tmp;
         }
 
         public void run() {
-            Log.e(TAG,"Running?");
+            Log.e(TAG, "Running?");
             BluetoothSocket socket = null;
             // Keep listening until exception occurs or a socket is returned
             while (true) {
 
                 try {
-
                     socket = mmServerSocket.accept();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -152,14 +154,17 @@ public class BluetoothHost extends Activity {
             }
         }
 
-        /** Will cancel the listening socket, and cause the thread to finish */
+        /**
+         * Will cancel the listening socket, and cause the thread to finish
+         */
         public void cancel() {
             try {
                 mmServerSocket.close();
                 Message msg = handle.obtainMessage(READY_TO_CONN);
                 handle.sendMessage(msg);
 
-            } catch (IOException e) { }
+            } catch (IOException e) {
+            }
         }
     }
 
@@ -173,9 +178,9 @@ public class BluetoothHost extends Activity {
 
         // Send the name of the connected device back to the UI Activity
         // so the HH can show you it's working and stuff...
-        String devs="";
-        for(BluetoothSocket sock: mSockets) {
-            devs+=sock.getRemoteDevice().getName()+"\n";
+        String devs = "";
+        for (BluetoothSocket sock : mSockets) {
+            devs += sock.getRemoteDevice().getName() + "\n";
         }
         // pass it to the UI....
         Message msg = handle.obtainMessage(STATE_CONNECTION_STARTED);
@@ -185,6 +190,7 @@ public class BluetoothHost extends Activity {
 
         handle.sendMessage(msg);
     }
+
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
@@ -216,8 +222,8 @@ public class BluetoothHost extends Activity {
             while (true) {
                 try {
                     //byte[] blah = ("System Time:" +System.currentTimeMillis()).getBytes();
-                    if(!msgToSend.equals("")) {
-                        Log.e(TAG,"writing!");
+                    if (!msgToSend.equals("")) {
+                        Log.e(TAG, "writing!");
                         write(msgToSend.getBytes());
                         setMsg("");
                     }
@@ -237,20 +243,30 @@ public class BluetoothHost extends Activity {
                         });
                     }
 
-                    Thread.sleep(1000);
+                    if (!mmSocket.isConnected()) {
+                        Log.i(TAG, "Socket no longer connected");
+                        connectionLost();
+                        break;
+                    }
+
+                    Thread.yield();
+
                 } catch (Exception e) {
                     Log.e(TAG, "disconnected", e);
                     connectionLost();
                 }
             }
         }
+
         public void connectionLost() {
             Message msg = handle.obtainMessage(STATE_CONNECTION_LOST);
             handle.sendMessage(msg);
         }
+
         /**
          * Write to the connected OutStream.
-         * @param buffer  The bytes to write
+         *
+         * @param buffer The bytes to write
          */
         public void write(byte[] buffer) {
             try {
@@ -271,16 +287,18 @@ public class BluetoothHost extends Activity {
             }
         }
     }
+
     public static synchronized void setMsg(String newMsg) {
         msgToSend = newMsg;
     }
+
     public static class HostBroadRec extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Bundle b= intent.getExtras();
-            String vals ="";
-            for(String key: b.keySet()) {
-                vals+=key+"&"+b.getString(key)+"Z";
+            Bundle b = intent.getExtras();
+            String vals = "";
+            for (String key : b.keySet()) {
+                vals += key + "&" + b.getString(key) + "Z";
             }
             BluetoothHost.setMsg(vals);
         }
