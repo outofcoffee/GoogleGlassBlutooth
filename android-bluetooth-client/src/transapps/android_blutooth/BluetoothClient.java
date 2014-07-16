@@ -26,6 +26,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,6 +80,8 @@ public class BluetoothClient extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.bluetooth_activity_layout);
+
         //      publishCards(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         ctx = this;
@@ -134,7 +137,6 @@ public class BluetoothClient extends Activity {
         } else {
             detectAndSetUp();
         }
-        setContentView(R.layout.bluetooth_activity_layout);
 
     }
 
@@ -175,7 +177,7 @@ public class BluetoothClient extends Activity {
                 }
                 // Add the name and address to an array adapter to show in a ListView
                 //              btArray.add(device.getName() + "\n" + device.getAddress());
-                //              update();
+                update();
             }
         }
         myBt.startDiscovery();
@@ -188,19 +190,7 @@ public class BluetoothClient extends Activity {
             @Override
             public void onItemSelected(AdapterView<?> arg0, View arg1,
                                        int position, long id) {
-                if(mConnThread!=null) {
-                    Log.e(TAG,"Canceling old connection, and starting new one.");
-                    mConnThread.cancel();
-                } else {
-                    Log.e(TAG,"got a thing...");
-                    String str = ((TextView)arg1).getText().toString();
-                    Log.e(TAG,"tots: "+str);
-                    String[] vals = str.split("\n");
-                    Log.e(TAG,"mac: "+vals[1]);
-                    BluetoothDevice dev = myBt.getRemoteDevice(vals[1]);
-                    mConnThread = new ConnectThread(dev);
-                    mConnThread.run();
-                }
+                activate((TextView) arg1);
             }
 
             @Override
@@ -210,7 +200,31 @@ public class BluetoothClient extends Activity {
             }
 
         });
+        Button devices_activate = (Button) findViewById(R.id.devices_activate);
+        devices_activate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                activate((TextView) devices.getSelectedView());
+            }
+        });
     }
+
+    private void activate(TextView arg1) {
+        if(mConnThread!=null) {
+            Log.e(TAG, "Canceling old connection, and starting new one.");
+            mConnThread.cancel();
+        } else {
+            Log.e(TAG,"got a thing...");
+            String str = ((TextView)arg1).getText().toString();
+            Log.e(TAG,"tots: "+str);
+            String[] vals = str.split("\n");
+            Log.e(TAG,"mac: "+vals[1]);
+            BluetoothDevice dev = myBt.getRemoteDevice(vals[1]);
+            mConnThread = new ConnectThread(dev);
+            mConnThread.start(); // wtf .run();
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.

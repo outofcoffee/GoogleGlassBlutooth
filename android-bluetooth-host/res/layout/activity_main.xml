@@ -16,11 +16,4 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
-    <CheckBox
-        android:id="@+id/text_to_speech_check"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="TextToSpeech"
-         />
-
 </LinearLayout>

@@ -24,7 +24,7 @@ import android.widget.TextView;
 
 public class BluetoothHost extends Activity {
 
-    public static String msgToSend="";
+    public static String msgToSend="hello world";
     public static final int STATE_CONNECTION_STARTED = 0;
     public static final int STATE_CONNECTION_LOST = 1;
     public static final int READY_TO_CONN = 2;
@@ -164,9 +164,11 @@ public class BluetoothHost extends Activity {
 
 
     private void manageConnectedSocket(BluetoothSocket socket) {
+        mSockets.add(socket);
+
         // start our connection thread
         mConnectedThread = new ConnectedThread(socket);
-        mConnectedThread.start();
+        mConnectedThread.run(); // FIXME start();
 
         // Send the name of the connected device back to the UI Activity
         // so the HH can show you it's working and stuff...
