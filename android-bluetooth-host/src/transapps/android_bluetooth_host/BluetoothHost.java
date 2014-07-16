@@ -20,6 +20,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 public class BluetoothHost extends Activity {
@@ -220,6 +221,22 @@ public class BluetoothHost extends Activity {
                         write(msgToSend.getBytes());
                         setMsg("");
                     }
+
+                    if (mmInStream.available() > 0) {
+                        final byte[] inData = new byte[mmInStream.available()];
+                        mmInStream.read(inData);
+
+                        final String s = new String(inData);
+                        Log.i(TAG, "Data received: " + s);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(BluetoothHost.this, "Data received: " + s, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+
                     Thread.sleep(1000);
                 } catch (Exception e) {
                     Log.e(TAG, "disconnected", e);

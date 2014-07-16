@@ -48,6 +48,7 @@ public class BluetoothClient extends Activity {
     String uuid1 = "05f2934c-1e81-4554-bb08-44aa761afbfb";
     String uuid2 = "c2911cd0-5c3c-11e3-949a-0800200c9a66";
     //  DateFormat df = new DateFormat("ddyyyy")
+    String dataToSend;
     ConnectThread mConnThread;
     Spinner devices;
     Handler handle;
@@ -105,6 +106,8 @@ public class BluetoothClient extends Activity {
                             // do soemthing...
                         }
 
+                        Toast.makeText(BluetoothClient.this, "Message received: " + readMessage, Toast.LENGTH_LONG).show();
+                        sendMessageToHost("how are you?");
 
                         //                      updateCards(ctx, readMessage);
                         //                          update()
@@ -138,6 +141,10 @@ public class BluetoothClient extends Activity {
             detectAndSetUp();
         }
 
+    }
+
+    private void sendMessageToHost(String message) {
+        dataToSend = message;
     }
 
     @Override
@@ -363,14 +370,27 @@ public class BluetoothClient extends Activity {
             // Keep listening to the InputStream while connected
             while (true) {
                 try {
-                    //                  byte[] blah = ("System Time:" +System.currentTimeMillis()).getBytes();
-                    //                  write(blah);
-                    //                  Thread.sleep(1000);
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-                    // Send the obtained bytes to the UI Activity
-                    handle.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-                            .sendToTarget();
+                    if (mmInStream.available() > 0) {
+                        //                  byte[] blah = ("System Time:" +System.currentTimeMillis()).getBytes();
+                        //                  write(blah);
+                        //                  Thread.sleep(1000);
+                        // Read from the InputStream
+                        bytes = mmInStream.read(buffer);
+                        // Send the obtained bytes to the UI Activity
+                        handle.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
+                                .sendToTarget();
+
+                    } else {
+                        if (null != dataToSend){
+                            byte[] data = dataToSend.getBytes();
+                            dataToSend = "";
+
+                            mmOutStream.write(data);
+                            mmOutStream.flush();
+                        }
+
+                        Thread.yield();
+                    }
 
                     //                  .sendToTarget();
                 } catch (Exception e) {
